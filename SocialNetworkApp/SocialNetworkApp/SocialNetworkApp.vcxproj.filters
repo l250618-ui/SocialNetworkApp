@@ -15,35 +15,40 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Comment.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Date.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
+    <ClInclude Include="ActivityPost.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Comment.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Date.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Entity.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Memory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Page.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Post.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PostManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SocialNetworkingApp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="User.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
     <ClCompile Include="Entity.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Post.cpp">
-      <Filter>Header Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ActivityPost.cpp">
-      <Filter>Header Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Memory.cpp">
-      <Filter>Header Files</Filter>
-    </ClCompile>
-    <ClCompile Include="PostManager.cpp">
-      <Filter>Header Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Page.cpp">
-      <Filter>Header Files</Filter>
-    </ClCompile>
-    <ClCompile Include="User.cpp">
-      <Filter>Header Files</Filter>
-    </ClCompile>
-    <ClCompile Include="SocialNetworkingApp.cpp">
-      <Filter>Header Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
