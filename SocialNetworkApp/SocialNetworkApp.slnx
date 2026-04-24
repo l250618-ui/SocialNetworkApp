@@ -3,5 +3,5 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="SocialNetworkApp/SocialNetworkApp.vcxproj" />
+  <Project Path="SocialNetworkApp/SocialNetworkApp.vcxproj" Id="71d28468-71fb-40db-a47d-4f13508f1788" />
 </Solution>

@@ -6,6 +6,8 @@ using namespace std;
 class Post;
 class User;
 
+const int MAX_PAGE_POSTS = 50;
+
 class Page : public Entity {
     User* owner;
     Post** posts;
@@ -13,7 +15,7 @@ class Page : public Entity {
     int likeCount;
 public:
     Page();
-    Page(string id, string name, User* owner);
+    Page(string id, string name, User* owner = nullptr);
     void addPost(Post* post);
     Post** getPosts() const;
     int getPostCount() const;

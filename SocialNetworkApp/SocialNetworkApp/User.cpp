@@ -6,6 +6,10 @@ using namespace std;
 class Post;
 class Page;
 
+const int MAX_FRIENDS = 20;
+const int MAX_LIKED_PAGES = 20;
+const int MAX_TIMELINE = 50;
+
 class User : public Entity {
     User** friends;
     int friendCount;

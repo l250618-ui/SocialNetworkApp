@@ -127,9 +127,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ActivityPost.cpp" />
     <ClCompile Include="Comment.cpp" />
     <ClCompile Include="Date.cpp" />
     <ClCompile Include="Entity.cpp" />
+    <ClCompile Include="Memory.cpp" />
+    <ClCompile Include="Page.cpp" />
+    <ClCompile Include="Post.cpp" />
+    <ClCompile Include="PostManager.cpp" />
+    <ClCompile Include="SocialNetworkingApp.cpp" />
+    <ClCompile Include="User.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
