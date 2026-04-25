@@ -33,6 +33,7 @@
   <ItemGroup>
     <ClCompile Include="Entity.cpp" />
     <ClCompile Include="Page.cpp" />
+    <ClCompile Include="SocialNetworkingApp.cpp" />
     <ClCompile Include="User.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
