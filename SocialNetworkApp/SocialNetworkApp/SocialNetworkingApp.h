@@ -4,7 +4,10 @@
 #include "PostManager.h"
 #include "Date.h"
 
-class SocialNetworkApp {
+const int MAX_USERS = 20;
+const int MAX_PAGES = 12;
+
+class SocialNetworkingApp {
     User** users;
     int userCount;
     Page** pages;
@@ -22,7 +25,7 @@ class SocialNetworkApp {
     Page* findPage(string id) const;
 
 public:
-    SocialNetworkApp();
+    SocialNetworkingApp();
 
     // Partner B
     void setDate(int d, int m, int y);
@@ -42,5 +45,5 @@ public:
     void viewLikedList() const;
 
     void Run();             // Main loop
-    ~SocialNetworkApp();
+    ~SocialNetworkingApp();
 };
