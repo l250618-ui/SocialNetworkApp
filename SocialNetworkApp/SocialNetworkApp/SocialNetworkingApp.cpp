@@ -1,4 +1,5 @@
 #include "User.h"
+#include "ActivityPost.h"
 #include "Page.h"
 #include "PostManager.h"
 #include "Date.h"
