@@ -171,8 +171,3 @@ void SocialNetworkingApp::Run() {
 		}
 	} while (choice != 0);
 }
-
-int main() {
-	SocialNetworkingApp App;
-	return 0;
-}
