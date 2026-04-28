@@ -37,6 +37,22 @@ bool Date::isWithin24Hours(const Date& current) const{
 
     return false;
 }
+bool Date::isWithinLastNDays(const Date& current, int n) const {
+    if (year == current.year && month == current.month) {
+        int diff = current.day - day;
+        if (diff >= 0 && diff <= n) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Date::isSameDayAndMonth(const Date& other) const {
+    if (day == other.day && month == other.month) {
+        return true;
+    }
+    return false;
+}
 void Date::display() const{
     cout << day << "/" << month << "/" << year << endl;
 }
