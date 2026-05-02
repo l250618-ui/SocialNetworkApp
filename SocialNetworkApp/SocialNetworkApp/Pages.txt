@@ -1,4 +1,4 @@
-﻿12
+12
 p1        Food Fusion
 p2        Al Jazeera English
 p3        Allama Iqbal

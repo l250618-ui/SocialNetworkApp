@@ -54,34 +54,37 @@ void SocialNetworkingApp::loadPages() {
 void SocialNetworkingApp::loadUsers() {
 	// PASS 1
 	ifstream fin("Users.txt");
-	string id, name, dummy;
-	while (getline(fin, id)) {
-		getline(fin, name);
+	string line;
+	while (getline(fin, line)) {
+		if (!line.empty() && line.back() == '\r') line.pop_back();
+		istringstream ss(line);
+		string id, name1, name2;
+		ss >> id >> name1 >> name2;
+		string name = name1 + " " + name2;
 		users[userCount] = new User(id, name);
 		userCount++;
-		getline(fin, dummy);
-		getline(fin, dummy);
 	}
 	fin.close();
+
 	// PASS 2
 	ifstream fin2("Users.txt");
-	string id2, name2;
 	int i = 0;
-	while (getline(fin2, id2)) {
-		getline(fin2, name2);
-		string token;
-		getline(fin2, token);
-		istringstream ss1(token);
-		int fid;
-		while (ss1 >> fid && fid != -1) {
-			users[i]->addFriend(findUser("u" + to_string(fid)));
+	while (getline(fin2, line)) {
+		if (!line.empty() && line.back() == '\r') line.pop_back();
+		istringstream ss(line);
+		string id, name1, name2, token;
+		ss >> id >> name1 >> name2;
+
+		// friends until -1
+		while (ss >> token && token != "-1") {
+			users[i]->addFriend(findUser(token));
 		}
-		getline(fin2, token);
-		istringstream ss2(token);
-		int pid;
-		while (ss2 >> pid && pid != -1) {
-			users[i]->addLikedPage(findPage("p" + to_string(pid)));
+
+		// pages until -1
+		while (ss >> token && token != "-1") {
+			users[i]->addLikedPage(findPage(token));
 		}
+
 		i++;
 	}
 	fin2.close();
@@ -187,6 +190,7 @@ void SocialNetworkingApp::shareMemory() {string postID;
 void SocialNetworkingApp::Run() {
 	loadPages();
 	loadUsers();
+	postManager->loadPosts();
 	setCurrentUser();
 
 	int choice;

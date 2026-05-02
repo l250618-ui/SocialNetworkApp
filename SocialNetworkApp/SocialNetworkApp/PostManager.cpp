@@ -18,32 +18,47 @@ PostManager::PostManager() {
 
 void PostManager::loadPosts() {
     ifstream file("Posts.txt");
-    string line;
-    
-    while (getline(file, line)) {
-        stringstream ss(line);
-        string type, id, sharedByID, desc, day, month, year, actType, actValue;
-        
-        getline(ss, type, ',');
-        getline(ss, id, ',');
-        getline(ss, sharedByID, ',');
-        getline(ss, desc, ',');
-        getline(ss, day, ',');
-        getline(ss, month, ',');
-        getline(ss, year, ',');
-        
-        Date date(stoi(day), stoi(month), stoi(year));
-        
-        if (type == "P") {
-            // simple post - sharedBy will be set later by app
-            Post* p = new Post(id, desc, date, nullptr);
-            posts[postCount++] = p;
+    if (!file.is_open()) {
+        cout << "Failed to open Posts.txt" << endl;
+        return;
+    }
+
+    int totalPosts;
+    file >> totalPosts;
+
+    int type;
+    string postID;
+
+    while (file >> type >> postID) {
+        int day, month, year;
+        file >> day >> month >> year;
+        file.ignore();
+
+        string desc;
+        getline(file, desc);
+
+        int actType = 0;
+        string actValue = "";
+
+        if (type == 2) {
+            file >> actType;
+            file.ignore();
+            getline(file, actValue);
         }
-        else if (type == "A") {
-            getline(ss, actType, ',');
-            getline(ss, actValue, ',');
-            ActivityPost* p = new ActivityPost(id, desc, date, nullptr, stoi(actType), actValue);
-            posts[postCount++] = p;
+
+        string sharedByID;
+        getline(file, sharedByID);
+
+        string likersLine;
+        getline(file, likersLine);
+
+        Date date(day, month, year);
+
+        if (type == 1) {
+            posts[postCount++] = new Post(postID, desc, date, nullptr);
+        }
+        else if (type == 2) {
+            posts[postCount++] = new ActivityPost(postID, desc, date, nullptr, actType, actValue);
         }
     }
     file.close();
