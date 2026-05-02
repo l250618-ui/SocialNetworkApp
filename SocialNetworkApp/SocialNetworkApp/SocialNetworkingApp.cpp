@@ -117,9 +117,13 @@ void SocialNetworkingApp::setCurrentUser() {
 	currentUser = findUser(id);
 }
 void SocialNetworkingApp::viewHome() const {
-	// needs filtering by date
-	// will do after Partner A
-	currentUser->displayTimeline();
+	Post** timeline = currentUser->getTimeline();
+	int count = currentUser->getTimelineCount();
+	for (int i = 0; i < count; i++) {
+		if (timeline[i]->getDate().isWithin24Hours(currentDate)) {
+			timeline[i]->display();
+		}
+	}
 }
 void SocialNetworkingApp::viewFriendList() const {
 	currentUser->displayFriends();
