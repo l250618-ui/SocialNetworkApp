@@ -5,6 +5,9 @@
 #include "PostManager.h"
 #include "Date.h"
 #include "SocialNetworkingApp.h"
+#include "Memory.h"
+#include "Comment.h"
+#include "Post.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -71,13 +74,13 @@ void SocialNetworkingApp::loadUsers() {
 		istringstream ss1(token);
 		int fid;
 		while (ss1 >> fid && fid != -1) {
-			users[i]->addFriend(findUser(to_string(fid)));
+			users[i]->addFriend(findUser("u" + to_string(fid)));
 		}
 		getline(fin2, token);
 		istringstream ss2(token);
 		int pid;
 		while (ss2 >> pid && pid != -1) {
-			users[i]->addLikedPage(findPage(to_string(pid)));
+			users[i]->addLikedPage(findPage("p" + to_string(pid)));
 		}
 		i++;
 	}
@@ -109,7 +112,8 @@ void SocialNetworkingApp::setDate(int d, int m, int y) {
 void SocialNetworkingApp::setCurrentUser() {
 	string id;
 	cout << "Enter user ID: ";
-	cin >> id;
+	cin.ignore();
+	getline(cin, id);
 	currentUser = findUser(id);
 }
 void SocialNetworkingApp::viewHome() const {
@@ -207,9 +211,4 @@ void SocialNetworkingApp::Run() {
 		default: cout << "Invalid choice.\n";
 		}
 	} while (choice != 0);
-}
-
-int main() {
-	SocialNetworkingApp App;
-	return 0;
 }
