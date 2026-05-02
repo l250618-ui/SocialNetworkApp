@@ -178,7 +178,7 @@ void SocialNetworkingApp::shareMemory() {string postID;
     getline(cin, desc);
 
     Memory* m = new Memory(id, desc, currentDate, currentUser, original);
-    postManager->addPost(m);
+    currentUser->addPost(m);
     cout << "Memory shared!" << endl;
 	// implement with Partner A
 }
