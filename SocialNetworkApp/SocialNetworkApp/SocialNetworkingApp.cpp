@@ -1,6 +1,7 @@
 #include "User.h"
 #include "ActivityPost.h"
 #include "Page.h"
+#include "Memory.h"
 #include "PostManager.h"
 #include "Date.h"
 #include "SocialNetworkingApp.h"
@@ -132,10 +133,45 @@ void SocialNetworkingApp::viewPage() const {
 	Page* p = findPage(id);
 	p->display();
 }
+
 void SocialNetworkingApp::seeYourMemories() const {
-	// implement w Partner A
+    Post** allPosts = postManager->getAllPosts();
+    int count = postManager->getPostCount();
+    bool found = false;
+
+    for (int i = 0; i < count; i++) {
+        Memory* m = dynamic_cast<Memory*>(allPosts[i]);
+        if (m != nullptr && m->getSharedBy() == currentUser) {
+            m->display();
+            found = true;
+        }
+    }
+
+    if (!found) {
+        cout << "No memories found." << endl;
+    }
 }
-void SocialNetworkingApp::shareMemory() {
+
+void SocialNetworkingApp::shareMemory() {string postID;
+    cout << "Enter post ID to share as memory: ";
+    cin >> postID;
+
+    Post* original = postManager->getPost(postID);
+    if (original == nullptr) {
+        cout << "Post not found." << endl;
+        return;
+    }
+
+    string id, desc;
+    cout << "Enter memory ID: ";
+    cin >> id;
+    cin.ignore();
+    cout << "Enter description: ";
+    getline(cin, desc);
+
+    Memory* m = new Memory(id, desc, currentDate, currentUser, original);
+    postManager->addPost(m);
+    cout << "Memory shared!" << endl;
 	// implement with Partner A
 }
 
