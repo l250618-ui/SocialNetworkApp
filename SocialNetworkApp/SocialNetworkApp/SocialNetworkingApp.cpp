@@ -214,11 +214,5 @@ void SocialNetworkingApp::Run() {
 
 
 
-int main() {
-	SocialNetworkingApp App;
-	
-    App.Run();
-    return 0;
-}
-	
+
 
