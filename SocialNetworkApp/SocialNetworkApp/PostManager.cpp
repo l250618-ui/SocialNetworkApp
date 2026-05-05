@@ -101,6 +101,11 @@ bool PostManager::likePost(string postID, Entity* user) {
     }
     return p->likePost(user);
 }
+void PostManager::addPost(Post* p) {
+    if (postCount < MAX_POSTS) {
+        posts[postCount++] = p;
+    }
+}
 
 bool PostManager::commentOnPost(string postID, Entity* author, string text) {
     Post* p = getPost(postID);

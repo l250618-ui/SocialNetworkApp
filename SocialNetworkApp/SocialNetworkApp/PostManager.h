@@ -5,8 +5,9 @@
 using namespace std;
 
 class PostManager {
-    Post** posts;
-    int postCount;
+   Post** posts;
+    int postCount;          
+    static const int MAX_POSTS = 100; 
 public:
     PostManager();
     void loadPosts();
@@ -14,6 +15,7 @@ public:
     Post* getPost(string postID) const;
     bool likePost(string postID, Entity* user);
     bool commentOnPost(string postID, Entity* author, string text);
+     void addPost(Post* p);      
     void viewPost(string postID) const;
     void viewLikedList(string postID) const;
     int getPostCount() const;

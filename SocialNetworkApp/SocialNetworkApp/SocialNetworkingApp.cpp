@@ -4,6 +4,7 @@
 #include "Memory.h"
 #include "PostManager.h"
 #include "Date.h"
+#include "Post.h"
 #include "SocialNetworkingApp.h"
 #include "Memory.h"
 #include "Comment.h"
