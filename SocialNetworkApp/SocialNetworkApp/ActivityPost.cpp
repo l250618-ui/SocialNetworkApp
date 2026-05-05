@@ -3,7 +3,7 @@
 #include <iostream>
 using namespace std;
 
-// default constructor - sets everything to empty/zero
+// default constructorsets everything to empty/zero
 ActivityPost::ActivityPost() {
     activityType = 0;
     activityValue = "";
@@ -51,7 +51,8 @@ void ActivityPost::display() const {
          << " " << activityValue << endl;
 
     // print the description text
-    cout << "\"" << description << "\"" << " ... (" << sharedDate.toString() << ")" << endl;
+    cout << "\"" << description << "\""
+         << " … (" << sharedDate.toString() << ")" << endl;
 
     // print all comments
     displayComments();

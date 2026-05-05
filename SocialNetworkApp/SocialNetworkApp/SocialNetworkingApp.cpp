@@ -6,9 +6,6 @@
 #include "Date.h"
 #include "Post.h"
 #include "SocialNetworkingApp.h"
-#include "Memory.h"
-#include "Comment.h"
-#include "Post.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -43,18 +40,11 @@ SocialNetworkingApp::~SocialNetworkingApp() {
 
 void SocialNetworkingApp::loadPages() {
 	ifstream fin("Pages.txt");
-	int count;
-	fin >> count;
-	fin.ignore();
-	for (int i = 0; i < count; i++) {
-		string line;
-		getline(fin, line);
-		if (!line.empty() && line.back() == '\r') line.pop_back();
-		istringstream ss(line);
-		string id, name;
-		ss >> id;
-		getline(ss >> ws, name);
-		pages[pageCount++] = new Page(id, name);
+	string id, name;
+	while (getline(fin, id)) {
+		getline(fin, name);
+		pages[pageCount] = new Page(id, name);
+		pageCount++;
 	}
 	fin.close();
 }
@@ -62,40 +52,34 @@ void SocialNetworkingApp::loadPages() {
 void SocialNetworkingApp::loadUsers() {
 	// PASS 1
 	ifstream fin("Users.txt");
-	int count;
-	fin >> count;
-	fin.ignore(); // skip rest of that line
-	string line;
-	while (getline(fin, line)) {
-		if (!line.empty() && line.back() == '\r') line.pop_back();
-		istringstream ss(line);
-		string id, name1, name2;
-		ss >> id >> name1 >> name2;
-		string name = name1 + " " + name2;
+	string id, name, dummy;
+	while (getline(fin, id)) {
+		getline(fin, name);
 		users[userCount] = new User(id, name);
 		userCount++;
+		getline(fin, dummy);
+		getline(fin, dummy);
 	}
 	fin.close();
-
 	// PASS 2
 	ifstream fin2("Users.txt");
+	string id2, name2;
 	int i = 0;
-	while (getline(fin2, line)) {
-		if (!line.empty() && line.back() == '\r') line.pop_back();
-		istringstream ss(line);
-		string id, name1, name2, token;
-		ss >> id >> name1 >> name2;
-
-		// friends until -1
-		while (ss >> token && token != "-1") {
-			users[i]->addFriend(findUser(token));
+	while (getline(fin2, id2)) {
+		getline(fin2, name2);
+		string token;
+		getline(fin2, token);
+		istringstream ss1(token);
+		int fid;
+		while (ss1 >> fid && fid != -1) {
+			users[i]->addFriend(findUser(to_string(fid)));
 		}
-
-		// pages until -1
-		while (ss >> token && token != "-1") {
-			users[i]->addLikedPage(findPage(token));
+		getline(fin2, token);
+		istringstream ss2(token);
+		int pid;
+		while (ss2 >> pid && pid != -1) {
+			users[i]->addLikedPage(findPage(to_string(pid)));
 		}
-
 		i++;
 	}
 	fin2.close();
@@ -125,60 +109,14 @@ void SocialNetworkingApp::setDate(int d, int m, int y) {
 }
 void SocialNetworkingApp::setCurrentUser() {
 	string id;
-	cout << "Enter user ID (e.g. u7): ";
+	cout << "Enter user ID: ";
 	cin >> id;
-	currentUser = findUser(id);  
-	if (currentUser == nullptr) {
-		cout << "User not found! Defaulting to u7 for testing." << endl;
-		currentUser = findUser("u7");  
-	}
-	else {
-		cout << currentUser->getName() << " set as current user." << endl;
-	}
+	currentUser = findUser(id);
 }
-
 void SocialNetworkingApp::viewHome() const {
-	cout << currentUser->getName() << " -- Home Page" << endl;
-
-	// friends' posts
-	User** friends = currentUser->getFriends();
-	int friendCount = currentUser->getFriendCount();
-	for (int f = 0; f < friendCount; f++) {
-		if (friends[f] == nullptr) continue;
-		Post** ft = friends[f]->getTimeline();
-		int fc = friends[f]->getTimelineCount();
-		for (int i = 0; i < fc; i++) {
-			if (ft[i]->getDate().isWithin24Hours(currentDate))
-				ft[i]->display();
-		}
-	}
-
-	// liked pages' posts
-	Page** likedPages = currentUser->getLikedPages();
-	int pageCount = currentUser->getLikedPageCount();
-	for (int p = 0; p < pageCount; p++) {
-		if (likedPages[p] == nullptr) continue;
-		Post** pt = likedPages[p]->getPosts();
-		int pc = likedPages[p]->getPostCount();
-		for (int i = 0; i < pc; i++) {
-			if (pt[i]->getDate().isWithin24Hours(currentDate))
-				pt[i]->display();
-		}
-	}
-}
-
-	// friends' posts
-	User** friends = currentUser->getFriends();
-	int friendCount = currentUser->getFriendCount();
-	for (int f = 0; f < friendCount; f++) {
-		if (friends[f] == nullptr) continue;
-		Post** ft = friends[f]->getTimeline();
-		int fc = friends[f]->getTimelineCount();
-		for (int i = 0; i < fc; i++) {
-			if (ft[i]->getDate().isWithin24Hours(currentDate))
-				ft[i]->display();
-		}
-	}
+	// needs filtering by date
+	// will do after Partner A
+	currentUser->displayTimeline();
 }
 void SocialNetworkingApp::viewFriendList() const {
 	currentUser->displayFriends();
@@ -198,95 +136,53 @@ void SocialNetworkingApp::viewPage() const {
 }
 
 void SocialNetworkingApp::seeYourMemories() const {
-	cout << "\n--- Your Memories ---" << endl;
-	Post** allPosts = postManager->getAllPosts();
-	int count = postManager->getPostCount();
-	for (int i = 0; i < count; i++) {
-		if (allPosts[i]->getSharedBy() == currentUser) {
-			Date postDate = allPosts[i]->getDate();
-			if (postDate.getDay() == currentDate.getDay() &&
-				postDate.getMonth() == currentDate.getMonth() &&
-				postDate.getYear() != currentDate.getYear()) {
-				allPosts[i]->display();
-			}
-		}
-	}
+    Post** allPosts = postManager->getAllPosts();
+    int count = postManager->getPostCount();
+    bool found = false;
+
+    for (int i = 0; i < count; i++) {
+        Memory* m = dynamic_cast<Memory*>(allPosts[i]);
+        if (m != nullptr && m->getSharedBy() == currentUser) {
+            m->display();
+            found = true;
+        }
+    }
+
+    if (!found) {
+        cout << "No memories found." << endl;
+    }
 }
 
-void SocialNetworkingApp::linkPostEntities() {
-	for (int i = 0; i < postManager->getPostCount(); i++) {
-		Post* p = postManager->getPostByIndex(i);
-		string sharedByID = p->getSharedByID();
-		if (sharedByID == "") continue;
+void SocialNetworkingApp::shareMemory() {string postID;
+    cout << "Enter post ID to share as memory: ";
+    cin >> postID;
 
-		User* u = findUser(sharedByID);
-		if (u != nullptr) {
-			p->setSharedBy(u);
-			u->addPost(p);
-			continue;  // it's a user, skip page check
-		}
+    Post* original = postManager->getPost(postID);
+    if (original == nullptr) {
+        cout << "Post not found." << endl;
+        return;
+    }
 
-		Page* pg = findPage(sharedByID);
-		if (pg != nullptr) {
-			p->setSharedBy(pg);
-			pg->addPost(p);  // <-- this was missing
-		}
-	}
+    string id, desc;
+    cout << "Enter memory ID: ";
+    cin >> id;
+    cin.ignore();
+    cout << "Enter description: ";
+    getline(cin, desc);
+
+    Memory* m = new Memory(id, desc, currentDate, currentUser, original);
+    postManager->addPost(m);
+    cout << "Memory shared!" << endl;
+	// implement with Partner A
 }
 
-void SocialNetworkingApp::shareMemory() {
-	string postID;
-	cout << "Enter post ID to share as memory: ";
-	cin >> postID;
-	Post* p = postManager->getPost(postID);
-	if (p == nullptr) {
-		cout << "Post not found." << endl;
-		return;
-	}
-	Memory* m = new Memory(p->getID(), p->getDescription(), currentDate, currentUser, p);
-	currentUser->addPost(m);
-	cout << "Memory shared!" << endl;
-}
-
-void SocialNetworkingApp::likePost() {
-	string postID;
-	cout << "Enter post ID to like: ";
-	cin >> postID;
-	postManager->likePost(postID, currentUser);
-}
-
-void SocialNetworkingApp::commentOnPost() {
-	string postID, text;
-	cout << "Enter post ID to comment on: ";
-	cin >> postID;
-	cin.ignore();
-	cout << "Enter comment: ";
-	getline(cin, text);
-	postManager->commentOnPost(postID, currentUser, text);
-}
-
-void SocialNetworkingApp::viewPost() const {
-	string postID;
-	cout << "Enter post ID: ";
-	cin >> postID;
-	postManager->viewPost(postID);
-}
-
-void SocialNetworkingApp::viewLikedList() const {
-	string postID;
-	cout << "Enter post ID: ";
-	cin >> postID;
-	postManager->viewLikedList(postID);
-}
 
 void SocialNetworkingApp::Run() {
 	loadPages();
 	loadUsers();
 	postManager->loadPosts(users, userCount, pages, pageCount);
-	linkPostEntities();
 	postManager->loadComments(users, userCount, pages, pageCount);
-	setDate(15, 11, 2017);
-	setCurrentUser();   
+	setCurrentUser();
 
 	int choice;
 	do {
@@ -315,3 +211,14 @@ void SocialNetworkingApp::Run() {
 		}
 	} while (choice != 0);
 }
+
+
+
+int main() {
+	SocialNetworkingApp App;
+	
+    App.Run();
+    return 0;
+}
+	
+

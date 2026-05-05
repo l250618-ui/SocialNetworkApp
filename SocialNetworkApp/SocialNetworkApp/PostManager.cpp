@@ -1,14 +1,13 @@
 #include "PostManager.h"
 #include "ActivityPost.h"
 #include "Memory.h"
-#include "User.h"    
-#include "Page.h"    
+#include "Post.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include "User.h"
+#include "Page.h"
 using namespace std;
-
-const int MAX_POSTS = 100;
 
 PostManager::PostManager() {
     posts = new Post*[MAX_POSTS];
@@ -18,127 +17,70 @@ PostManager::PostManager() {
     postCount = 0;
 }
 
-void PostManager::loadPosts(User** users, int userCount, Page** pages, int pageCount) {
-    ifstream file("Posts.txt");
-    if (!file.is_open()) {
-        cout << "Failed to open Posts.txt" << endl;
-        return;
-    }
-
-    int totalPosts;
-    file >> totalPosts;
-
-    int type;
-    string postID;
-
-    while (file >> type >> postID) {
-        int day, month, year;
-        file >> day >> month >> year;
-        file.ignore();
-
-        string desc;
-        getline(file, desc);
-
-        int actType = 0;
-        string actValue = "";
-
-        if (type == 2) {
-            file >> actType;
-            file.ignore();
-            getline(file, actValue);
+void PostManager::loadPosts(User** users, int userCount, Page** pages, int pageCount){ 
+ ifstream file("Posts.txt");
+    string line;
+    
+    while (getline(file, line)) {
+        stringstream ss(line);
+        string type, id, sharedByID, desc, day, month, year, actType, actValue;
+        
+        getline(ss, type, ',');
+        getline(ss, id, ',');
+        getline(ss, sharedByID, ',');
+        getline(ss, desc, ',');
+        getline(ss, day, ',');
+        getline(ss, month, ',');
+        getline(ss, year, ',');
+        
+        Date date(stoi(day), stoi(month), stoi(year));
+        
+        if (type == "P") {
+            // simple post - sharedBy will be set later by app
+           Entity* owner = nullptr;
+for (int i = 0; i < userCount; i++)
+    if (users[i]->getID() == sharedByID) { owner = users[i]; break; }
+if (!owner)
+    for (int i = 0; i < pageCount; i++)
+        if (pages[i]->getID() == sharedByID) { owner = pages[i]; break; }
+Post* p = new Post(id, desc, date, owner);
+posts[postCount++] = p;
         }
-
-        string sharedByID;
-        getline(file, sharedByID);
-        if (!sharedByID.empty() && sharedByID.back() == '\r')
-            sharedByID.pop_back();
-
-        string likersLine;
-        getline(file, likersLine);
-
-        Date date(day, month, year);
-        Post* newPost = nullptr;
-
-        if (type == 1) {
-            newPost = new Post(postID, desc, date, nullptr);
+        else if (type == "A") {
+            getline(ss, actType, ',');
+            getline(ss, actValue, ',');
+           Entity* owner = nullptr;
+      for (int i = 0; i < userCount; i++)
+    if (users[i]->getID() == sharedByID) { owner = users[i]; break; }
+      if (!owner)
+    for (int i = 0; i < pageCount; i++)
+        if (pages[i]->getID() == sharedByID) { owner = pages[i]; break; }
+        ActivityPost* p = new ActivityPost(id, desc, date, owner, stoi(actType), actValue);
+          posts[postCount++] = p;
         }
-        else if (type == 2) {
-            newPost = new ActivityPost(postID, desc, date, nullptr, actType, actValue);
-        }
-
-        if (newPost == nullptr) continue;
-        newPost->setSharedByID(sharedByID);
-
-        // resolve and store likers
-        istringstream ls(likersLine);
-        string likerID;
-        while (ls >> likerID && likerID != "-1") {
-            Entity* liker = nullptr;
-            for (int i = 0; i < userCount; i++) {
-                if (users[i]->getID() == likerID) {
-                    liker = users[i];
-                    break;
-                }
-            }
-            if (liker == nullptr) {
-                for (int i = 0; i < pageCount; i++) {
-                    if (pages[i]->getID() == likerID) {
-                        liker = pages[i];
-                        break;
-                    }
-                }
-            }
-            if (liker != nullptr)
-                newPost->likePost(liker);
-        }
-
-        posts[postCount++] = newPost;
     }
     file.close();
 }
 
 void PostManager::loadComments(User** users, int userCount, Page** pages, int pageCount) {
-    ifstream file("Comments.txt");
-    if (!file.is_open()) {
-        cout << "Failed to open Comments.txt" << endl;
-        return;
-    }
-
-    int total;
-    file >> total;
-    file.ignore();
-
+       ifstream file("Comments.txt");
     string line;
+    
     while (getline(file, line)) {
-        if (line.empty()) continue;
-        if (!line.empty() && line.back() == '\r') line.pop_back();
-
-        istringstream ss(line);
-        string cID, postID, authorID, text;
-        ss >> cID >> postID >> authorID;
-        getline(ss >> ws, text);  // rest of line is the comment text
-
+        stringstream ss(line);
+        string postID, authorID, text;
+        
+        getline(ss, postID, ',');
+        getline(ss, authorID, ',');
+        getline(ss, text, ',');
+        
         Post* p = getPost(postID);
-        if (p == nullptr) continue;
-
-        // resolve authorID to Entity*
-        Entity* author = nullptr;
-        for (int i = 0; i < userCount; i++) {
-            if (users[i]->getID() == authorID) {
-                author = users[i];
-                break;
-            }
-        }
-        if (author == nullptr) {
-            for (int i = 0; i < pageCount; i++) {
-                if (pages[i]->getID() == authorID) {
-                    author = pages[i];
-                    break;
-                }
-            }
-        }
-
-        p->addComment(author, text);
+if (p != nullptr) {
+    Entity* author = nullptr;
+    for (int i = 0; i < userCount; i++)
+        if (users[i]->getID() == authorID) { author = users[i]; break; }
+    p->addComment(author, text);
+}
     }
     file.close();
 }
@@ -201,11 +143,10 @@ int PostManager::getPostCount() const {
 Post** PostManager::getAllPosts() const {
     return posts;
 }
-
 Post* PostManager::getPostByIndex(int i) const {
-    return posts[i];
+    if (i >= 0 && i < postCount) return posts[i];
+    return nullptr;
 }
-
 PostManager::~PostManager() {
     for (int i = 0; i < postCount; i++) {
         delete posts[i];

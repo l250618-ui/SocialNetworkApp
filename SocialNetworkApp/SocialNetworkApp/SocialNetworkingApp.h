@@ -3,6 +3,7 @@
 #include "Page.h"
 #include "PostManager.h"
 #include "Date.h"
+#include "Post.h"
 
 const int MAX_USERS = 20;
 const int MAX_PAGES = 12;
@@ -37,7 +38,6 @@ public:
     void viewPage() const;
     void seeYourMemories() const;
     void shareMemory();
-    void linkPostEntities();
 
     // Routed to PostManager (Partner A owns implementation)
     void likePost();

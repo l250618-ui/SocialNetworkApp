@@ -1,6 +1,8 @@
 #include "Post.h"
+
 #include "Entity.h"
 #include <iostream>
+#include "Post.h"
 using namespace std;
 
 Post::Post() {
@@ -50,10 +52,6 @@ string Post::getDescription() const {
 
 Date Post::getDate() const {
     return sharedDate;
-}
-
-void Post::setSharedByID(string id) {
-    sharedByID = id;
 }
 
 Entity* Post::getSharedBy() const {
@@ -120,10 +118,8 @@ void Post::displayComments() const {
 }
 
 void Post::display() const {
-    if (sharedBy != nullptr)
-        cout << "--- " << sharedBy->getName() << " shared \"" << description << "\"" << endl;
-    else
-        cout << "--- " << description << endl;
+    cout << "--- " << sharedBy->getName() 
+         << " shared \"" << description << "\"" << endl;
     displayComments();
 }
 
@@ -138,12 +134,4 @@ Post::~Post() {
     // do NOT delete the Entity objects inside likedBy
     // they are owned by the app, not by Post
     delete[] likedBy;
-}
-
-string Post::getSharedByID() const {
-    return sharedByID;
-}
-
-void Post::setSharedBy(Entity* e) {
-    sharedBy = e;
 }
