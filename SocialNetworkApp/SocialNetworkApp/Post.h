@@ -19,6 +19,7 @@ protected:
     int commentCount;
     Comment** comments;
     Entity* sharedBy;
+    string sharedByID;
 public:
     Post();
     Post(string id, string desc, Date date, Entity* sharedBy);
@@ -26,6 +27,9 @@ public:
     string getDescription() const;
     Date getDate() const;
     Entity* getSharedBy() const;
+    string getSharedByID() const;
+    void setSharedByID(string id);
+    void setSharedBy(Entity* e);
     bool likePost(Entity* user);
     void addPost(Post* p);
     void addComment(Entity* author, string text);

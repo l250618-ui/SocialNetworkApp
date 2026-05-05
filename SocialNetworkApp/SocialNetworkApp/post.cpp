@@ -52,6 +52,10 @@ Date Post::getDate() const {
     return sharedDate;
 }
 
+void Post::setSharedByID(string id) {
+    sharedByID = id;
+}
+
 Entity* Post::getSharedBy() const {
     return sharedBy;
 }
@@ -116,8 +120,10 @@ void Post::displayComments() const {
 }
 
 void Post::display() const {
-    cout << "--- " << sharedBy->getName() 
-         << " shared \"" << description << "\"" << endl;
+    if (sharedBy != nullptr)
+        cout << "--- " << sharedBy->getName() << " shared \"" << description << "\"" << endl;
+    else
+        cout << "--- " << description << endl;
     displayComments();
 }
 
@@ -132,4 +138,12 @@ Post::~Post() {
     // do NOT delete the Entity objects inside likedBy
     // they are owned by the app, not by Post
     delete[] likedBy;
+}
+
+string Post::getSharedByID() const {
+    return sharedByID;
+}
+
+void Post::setSharedBy(Entity* e) {
+    sharedBy = e;
 }

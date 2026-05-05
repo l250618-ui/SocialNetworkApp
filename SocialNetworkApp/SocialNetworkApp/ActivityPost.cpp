@@ -51,8 +51,7 @@ void ActivityPost::display() const {
          << " " << activityValue << endl;
 
     // print the description text
-    cout << "\"" << description << "\""
-         << " … (" << sharedDate.toString() << ")" << endl;
+    cout << "\"" << description << "\"" << " ... (" << sharedDate.toString() << ")" << endl;
 
     // print all comments
     displayComments();
