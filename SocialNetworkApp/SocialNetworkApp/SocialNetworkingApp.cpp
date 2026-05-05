@@ -42,11 +42,18 @@ SocialNetworkingApp::~SocialNetworkingApp() {
 
 void SocialNetworkingApp::loadPages() {
 	ifstream fin("Pages.txt");
-	string id, name;
-	while (getline(fin, id)) {
-		getline(fin, name);
-		pages[pageCount] = new Page(id, name);
-		pageCount++;
+	int count;
+	fin >> count;
+	fin.ignore();
+	for (int i = 0; i < count; i++) {
+		string line;
+		getline(fin, line);
+		if (!line.empty() && line.back() == '\r') line.pop_back();
+		istringstream ss(line);
+		string id, name;
+		ss >> id;
+		getline(ss >> ws, name);
+		pages[pageCount++] = new Page(id, name);
 	}
 	fin.close();
 }
@@ -54,6 +61,9 @@ void SocialNetworkingApp::loadPages() {
 void SocialNetworkingApp::loadUsers() {
 	// PASS 1
 	ifstream fin("Users.txt");
+	int count;
+	fin >> count;
+	fin.ignore(); // skip rest of that line
 	string line;
 	while (getline(fin, line)) {
 		if (!line.empty() && line.back() == '\r') line.pop_back();
@@ -114,17 +124,58 @@ void SocialNetworkingApp::setDate(int d, int m, int y) {
 }
 void SocialNetworkingApp::setCurrentUser() {
 	string id;
-	cout << "Enter user ID: ";
-	cin.ignore();
-	getline(cin, id);
-	currentUser = findUser(id);
+	cout << "Enter user ID (e.g. u7): ";
+	cin >> id;
+	currentUser = findUser(id);  
+	if (currentUser == nullptr) {
+		cout << "User not found! Defaulting to u7 for testing." << endl;
+		currentUser = findUser("u7");  
+	}
+	else {
+		cout << currentUser->getName() << " set as current user." << endl;
+	}
 }
+
 void SocialNetworkingApp::viewHome() const {
-	Post** timeline = currentUser->getTimeline();
-	int count = currentUser->getTimelineCount();
-	for (int i = 0; i < count; i++) {
-		if (timeline[i]->getDate().isWithin24Hours(currentDate)) {
-			timeline[i]->display();
+	cout << currentUser->getName() << " -- Home Page" << endl;
+
+	// friends' posts
+	User** friends = currentUser->getFriends();
+	int friendCount = currentUser->getFriendCount();
+	for (int f = 0; f < friendCount; f++) {
+		if (friends[f] == nullptr) continue;
+		Post** ft = friends[f]->getTimeline();
+		int fc = friends[f]->getTimelineCount();
+		for (int i = 0; i < fc; i++) {
+			if (ft[i]->getDate().isWithin24Hours(currentDate))
+				ft[i]->display();
+		}
+	}
+
+	// liked pages' posts
+	Page** likedPages = currentUser->getLikedPages();
+	int pageCount = currentUser->getLikedPageCount();
+	for (int p = 0; p < pageCount; p++) {
+		if (likedPages[p] == nullptr) continue;
+		Post** pt = likedPages[p]->getPosts();
+		int pc = likedPages[p]->getPostCount();
+		for (int i = 0; i < pc; i++) {
+			if (pt[i]->getDate().isWithin24Hours(currentDate))
+				pt[i]->display();
+		}
+	}
+}
+
+	// friends' posts
+	User** friends = currentUser->getFriends();
+	int friendCount = currentUser->getFriendCount();
+	for (int f = 0; f < friendCount; f++) {
+		if (friends[f] == nullptr) continue;
+		Post** ft = friends[f]->getTimeline();
+		int fc = friends[f]->getTimelineCount();
+		for (int i = 0; i < fc; i++) {
+			if (ft[i]->getDate().isWithin24Hours(currentDate))
+				ft[i]->display();
 		}
 	}
 }
@@ -146,52 +197,95 @@ void SocialNetworkingApp::viewPage() const {
 }
 
 void SocialNetworkingApp::seeYourMemories() const {
-    Post** allPosts = postManager->getAllPosts();
-    int count = postManager->getPostCount();
-    bool found = false;
-
-    for (int i = 0; i < count; i++) {
-        Memory* m = dynamic_cast<Memory*>(allPosts[i]);
-        if (m != nullptr && m->getSharedBy() == currentUser) {
-            m->display();
-            found = true;
-        }
-    }
-
-    if (!found) {
-        cout << "No memories found." << endl;
-    }
+	cout << "\n--- Your Memories ---" << endl;
+	Post** allPosts = postManager->getAllPosts();
+	int count = postManager->getPostCount();
+	for (int i = 0; i < count; i++) {
+		if (allPosts[i]->getSharedBy() == currentUser) {
+			Date postDate = allPosts[i]->getDate();
+			if (postDate.getDay() == currentDate.getDay() &&
+				postDate.getMonth() == currentDate.getMonth() &&
+				postDate.getYear() != currentDate.getYear()) {
+				allPosts[i]->display();
+			}
+		}
+	}
 }
 
-void SocialNetworkingApp::shareMemory() {string postID;
-    cout << "Enter post ID to share as memory: ";
-    cin >> postID;
+void SocialNetworkingApp::linkPostEntities() {
+	for (int i = 0; i < postManager->getPostCount(); i++) {
+		Post* p = postManager->getPostByIndex(i);
+		string sharedByID = p->getSharedByID();
+		if (sharedByID == "") continue;
 
-    Post* original = postManager->getPost(postID);
-    if (original == nullptr) {
-        cout << "Post not found." << endl;
-        return;
-    }
+		User* u = findUser(sharedByID);
+		if (u != nullptr) {
+			p->setSharedBy(u);
+			u->addPost(p);
+			continue;  // it's a user, skip page check
+		}
 
-    string id, desc;
-    cout << "Enter memory ID: ";
-    cin >> id;
-    cin.ignore();
-    cout << "Enter description: ";
-    getline(cin, desc);
-
-    Memory* m = new Memory(id, desc, currentDate, currentUser, original);
-    currentUser->addPost(m);
-    cout << "Memory shared!" << endl;
-	// implement with Partner A
+		Page* pg = findPage(sharedByID);
+		if (pg != nullptr) {
+			p->setSharedBy(pg);
+			pg->addPost(p);  // <-- this was missing
+		}
+	}
 }
 
+void SocialNetworkingApp::shareMemory() {
+	string postID;
+	cout << "Enter post ID to share as memory: ";
+	cin >> postID;
+	Post* p = postManager->getPost(postID);
+	if (p == nullptr) {
+		cout << "Post not found." << endl;
+		return;
+	}
+	Memory* m = new Memory(p->getID(), p->getDescription(), currentDate, currentUser, p);
+	currentUser->addPost(m);
+	cout << "Memory shared!" << endl;
+}
+
+void SocialNetworkingApp::likePost() {
+	string postID;
+	cout << "Enter post ID to like: ";
+	cin >> postID;
+	postManager->likePost(postID, currentUser);
+}
+
+void SocialNetworkingApp::commentOnPost() {
+	string postID, text;
+	cout << "Enter post ID to comment on: ";
+	cin >> postID;
+	cin.ignore();
+	cout << "Enter comment: ";
+	getline(cin, text);
+	postManager->commentOnPost(postID, currentUser, text);
+}
+
+void SocialNetworkingApp::viewPost() const {
+	string postID;
+	cout << "Enter post ID: ";
+	cin >> postID;
+	postManager->viewPost(postID);
+}
+
+void SocialNetworkingApp::viewLikedList() const {
+	string postID;
+	cout << "Enter post ID: ";
+	cin >> postID;
+	postManager->viewLikedList(postID);
+}
 
 void SocialNetworkingApp::Run() {
 	loadPages();
 	loadUsers();
-	postManager->loadPosts();
-	setCurrentUser();
+	postManager->loadPosts(users, userCount, pages, pageCount);
+	linkPostEntities();
+	postManager->loadComments(users, userCount, pages, pageCount);
+	setDate(15, 11, 2017);
+	setCurrentUser();   
 
 	int choice;
 	do {

@@ -31,9 +31,7 @@ Post* Memory::getOriginalPost() const {
 // also calculates how many years ago the original post was made
 void Memory::display() const {
     // print the memory header with name and date
-    cout << "~~~ " << sharedBy->getName()
-         << " shared a memory ~~~ "
-         << "…(" << sharedDate.toString() << ")" << endl;
+    cout << "~~~ " << sharedBy->getName() << " shared a memory ~~~ " << "...(" << sharedDate.toString() << ")" << endl;
 
     // print the description of the memory post
     cout << "\"" << description << "\"" << endl;

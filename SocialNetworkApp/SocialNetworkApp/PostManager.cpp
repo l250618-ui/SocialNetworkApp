@@ -1,6 +1,8 @@
 #include "PostManager.h"
 #include "ActivityPost.h"
 #include "Memory.h"
+#include "User.h"    
+#include "Page.h"    
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -16,7 +18,7 @@ PostManager::PostManager() {
     postCount = 0;
 }
 
-void PostManager::loadPosts() {
+void PostManager::loadPosts(User** users, int userCount, Page** pages, int pageCount) {
     ifstream file("Posts.txt");
     if (!file.is_open()) {
         cout << "Failed to open Posts.txt" << endl;
@@ -48,38 +50,95 @@ void PostManager::loadPosts() {
 
         string sharedByID;
         getline(file, sharedByID);
+        if (!sharedByID.empty() && sharedByID.back() == '\r')
+            sharedByID.pop_back();
 
         string likersLine;
         getline(file, likersLine);
 
         Date date(day, month, year);
+        Post* newPost = nullptr;
 
         if (type == 1) {
-            posts[postCount++] = new Post(postID, desc, date, nullptr);
+            newPost = new Post(postID, desc, date, nullptr);
         }
         else if (type == 2) {
-            posts[postCount++] = new ActivityPost(postID, desc, date, nullptr, actType, actValue);
+            newPost = new ActivityPost(postID, desc, date, nullptr, actType, actValue);
         }
+
+        if (newPost == nullptr) continue;
+        newPost->setSharedByID(sharedByID);
+
+        // resolve and store likers
+        istringstream ls(likersLine);
+        string likerID;
+        while (ls >> likerID && likerID != "-1") {
+            Entity* liker = nullptr;
+            for (int i = 0; i < userCount; i++) {
+                if (users[i]->getID() == likerID) {
+                    liker = users[i];
+                    break;
+                }
+            }
+            if (liker == nullptr) {
+                for (int i = 0; i < pageCount; i++) {
+                    if (pages[i]->getID() == likerID) {
+                        liker = pages[i];
+                        break;
+                    }
+                }
+            }
+            if (liker != nullptr)
+                newPost->likePost(liker);
+        }
+
+        posts[postCount++] = newPost;
     }
     file.close();
 }
 
-void PostManager::loadComments() {
+void PostManager::loadComments(User** users, int userCount, Page** pages, int pageCount) {
     ifstream file("Comments.txt");
+    if (!file.is_open()) {
+        cout << "Failed to open Comments.txt" << endl;
+        return;
+    }
+
+    int total;
+    file >> total;
+    file.ignore();
+
     string line;
-    
     while (getline(file, line)) {
-        stringstream ss(line);
-        string postID, authorID, text;
-        
-        getline(ss, postID, ',');
-        getline(ss, authorID, ',');
-        getline(ss, text, ',');
-        
+        if (line.empty()) continue;
+        if (!line.empty() && line.back() == '\r') line.pop_back();
+
+        istringstream ss(line);
+        string cID, postID, authorID, text;
+        ss >> cID >> postID >> authorID;
+        getline(ss >> ws, text);  // rest of line is the comment text
+
         Post* p = getPost(postID);
-        if (p != nullptr) {
-            p->addComment(nullptr, text);
+        if (p == nullptr) continue;
+
+        // resolve authorID to Entity*
+        Entity* author = nullptr;
+        for (int i = 0; i < userCount; i++) {
+            if (users[i]->getID() == authorID) {
+                author = users[i];
+                break;
+            }
         }
+        if (author == nullptr) {
+            for (int i = 0; i < pageCount; i++) {
+                if (pages[i]->getID() == authorID) {
+                    author = pages[i];
+                    break;
+                }
+            }
+        }
+
+        p->addComment(author, text);
     }
     file.close();
 }
@@ -136,6 +195,10 @@ int PostManager::getPostCount() const {
 
 Post** PostManager::getAllPosts() const {
     return posts;
+}
+
+Post* PostManager::getPostByIndex(int i) const {
+    return posts[i];
 }
 
 PostManager::~PostManager() {

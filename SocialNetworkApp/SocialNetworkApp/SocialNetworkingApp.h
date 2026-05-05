@@ -37,6 +37,7 @@ public:
     void viewPage() const;
     void seeYourMemories() const;
     void shareMemory();
+    void linkPostEntities();
 
     // Routed to PostManager (Partner A owns implementation)
     void likePost();
