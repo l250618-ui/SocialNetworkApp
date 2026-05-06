@@ -17,70 +17,120 @@ PostManager::PostManager() {
     postCount = 0;
 }
 
-void PostManager::loadPosts(User** users, int userCount, Page** pages, int pageCount){ 
- ifstream file("Posts.txt");
+void PostManager::loadPosts(User** users, int userCount, Page** pages, int pageCount) {
+    ifstream file("Posts.txt");
     string line;
-    
+    getline(file, line); // skip count line "12"
+
     while (getline(file, line)) {
-        stringstream ss(line);
-        string type, id, sharedByID, desc, day, month, year, actType, actValue;
-        
-        getline(ss, type, ',');
-        getline(ss, id, ',');
-        getline(ss, sharedByID, ',');
-        getline(ss, desc, ',');
-        getline(ss, day, ',');
-        getline(ss, month, ',');
-        getline(ss, year, ',');
-        
-        Date date(stoi(day), stoi(month), stoi(year));
-        
-        if (type == "P") {
-            // simple post - sharedBy will be set later by app
-           Entity* owner = nullptr;
-for (int i = 0; i < userCount; i++)
-    if (users[i]->getID() == sharedByID) { owner = users[i]; break; }
-if (!owner)
-    for (int i = 0; i < pageCount; i++)
-        if (pages[i]->getID() == sharedByID) { owner = pages[i]; break; }
-Post* p = new Post(id, desc, date, owner);
-posts[postCount++] = p;
+        // trim \r
+        if (!line.empty() && line.back() == '\r') line.pop_back();
+        // skip blank lines
+        if (line.empty()) continue;
+
+        // line1: type and id
+        istringstream ss1(line);
+        int type;
+        string id;
+        ss1 >> type >> id;
+
+        // line2: date
+        getline(file, line);
+        if (!line.empty() && line.back() == '\r') line.pop_back();
+        istringstream ss2(line);
+        int day, month, year;
+        ss2 >> day >> month >> year;
+        Date date(day, month, year);
+
+        // line3: description
+        getline(file, line);
+        if (!line.empty() && line.back() == '\r') line.pop_back();
+        string desc = line;
+
+        // line4: actType + actValue (only if type == 2)
+        int actType = 0;
+        string actValue = "";
+        if (type == 2) {
+            getline(file, line);
+            if (!line.empty() && line.back() == '\r') line.pop_back();
+            istringstream ss3(line);
+            ss3 >> actType;
+            getline(ss3, actValue);
+            size_t start = actValue.find_first_not_of(" \t");
+            if (start != string::npos) actValue = actValue.substr(start);
         }
-        else if (type == "A") {
-            getline(ss, actType, ',');
-            getline(ss, actValue, ',');
-           Entity* owner = nullptr;
-      for (int i = 0; i < userCount; i++)
-    if (users[i]->getID() == sharedByID) { owner = users[i]; break; }
-      if (!owner)
-    for (int i = 0; i < pageCount; i++)
-        if (pages[i]->getID() == sharedByID) { owner = pages[i]; break; }
-        ActivityPost* p = new ActivityPost(id, desc, date, owner, stoi(actType), actValue);
-          posts[postCount++] = p;
+
+        // line5: sharedByID
+        getline(file, line);
+        if (!line.empty() && line.back() == '\r') line.pop_back();
+        string sharedByID = line;
+
+        // line6: likers until -1
+        getline(file, line);
+        if (!line.empty() && line.back() == '\r') line.pop_back();
+
+        // find owner
+        Entity* owner = nullptr;
+        for (int i = 0; i < userCount; i++)
+            if (users[i]->getID() == sharedByID) { owner = users[i]; break; }
+        if (!owner)
+            for (int i = 0; i < pageCount; i++)
+                if (pages[i]->getID() == sharedByID) { owner = pages[i]; break; }
+
+        // create post
+        Post* p = nullptr;
+        if (type == 1) {
+            p = new Post(id, desc, date, owner);
+        }
+        else if (type == 2) {
+            p = new ActivityPost(id, desc, date, owner, actType, actValue);
+        }
+
+        // parse likers line
+        if (p != nullptr) {
+            istringstream ssL(line);
+            string liker;
+            while (ssL >> liker && liker != "-1") {
+                Entity* e = nullptr;
+                for (int i = 0; i < userCount; i++)
+                    if (users[i]->getID() == liker) { e = users[i]; break; }
+                if (!e)
+                    for (int i = 0; i < pageCount; i++)
+                        if (pages[i]->getID() == liker) { e = pages[i]; break; }
+                if (e) p->likePost(e);
+            }
+            posts[postCount++] = p;
         }
     }
     file.close();
 }
 
 void PostManager::loadComments(User** users, int userCount, Page** pages, int pageCount) {
-       ifstream file("Comments.txt");
+    ifstream file("Comments.txt");
     string line;
-    
+    getline(file, line); // skip count line "13"
+
     while (getline(file, line)) {
-        stringstream ss(line);
-        string postID, authorID, text;
-        
-        getline(ss, postID, ',');
-        getline(ss, authorID, ',');
-        getline(ss, text, ',');
-        
+        if (!line.empty() && line.back() == '\r') line.pop_back();
+        if (line.empty()) continue;
+
+        istringstream ss(line);
+        string cid, postID, authorID, text;
+        ss >> cid >> postID >> authorID;
+        getline(ss, text);
+        size_t start = text.find_first_not_of(" \t");
+        if (start != string::npos) text = text.substr(start);
+
         Post* p = getPost(postID);
-if (p != nullptr) {
-    Entity* author = nullptr;
-    for (int i = 0; i < userCount; i++)
-        if (users[i]->getID() == authorID) { author = users[i]; break; }
-    p->addComment(author, text);
-}
+        if (p != nullptr) {
+            Entity* author = nullptr;
+            for (int i = 0; i < userCount; i++)
+                if (users[i]->getID() == authorID) { author = users[i]; break; }
+            if (!author)
+                for (int i = 0; i < pageCount; i++)
+                    if (pages[i]->getID() == authorID) { author = pages[i]; break; }
+            if (author) p->addComment(author, text);
+        }
     }
     file.close();
 }

@@ -16,6 +16,7 @@ class SocialNetworkingApp {
     User* currentUser;
     Date currentDate;
     PostManager* postManager;
+    void linkPostEntities();
 
     // Private file loaders (Partner B)
     void loadUsers();       // 2-pass
