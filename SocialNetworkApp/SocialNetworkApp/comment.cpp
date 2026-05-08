@@ -28,6 +28,5 @@ void Comment::display() const {
 }
 
 Comment::~Comment() {
-    
     // author is owned by User/Page, not by Comment
 }

@@ -1,8 +1,6 @@
 #include "Post.h"
-
 #include "Entity.h"
 #include <iostream>
-#include "Post.h"
 using namespace std;
 
 Post::Post() {
