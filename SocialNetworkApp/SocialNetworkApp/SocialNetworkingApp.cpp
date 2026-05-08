@@ -188,6 +188,8 @@ void SocialNetworkingApp::setCurrentUser() {
     while (true) {
         cout << "Enter user ID: ";
         cin >> id;
+        for (int i = 0; i < id.length(); i++)
+            id[i] = tolower(id[i]);
         currentUser = findUser(id);
         if (currentUser) {
             cout << currentUser->getName() << " successfully set as Current User" << endl;
@@ -361,7 +363,12 @@ void SocialNetworkingApp::Run() {
         cout << "11. View Liked List\n";
         cout << "0. Exit\n";
         cout << "Enter choice: ";
-        cin >> choice;
+        if (!(cin >> choice)) {
+            cin.clear();
+            cin.ignore(1000, '\n');
+            cout << "Invalid input. Try again.\n";
+            continue;
+        }
 
         switch (choice) {
         case 1:  viewHome(); break;
