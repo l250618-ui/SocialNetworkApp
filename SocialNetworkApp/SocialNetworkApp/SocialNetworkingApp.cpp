@@ -118,7 +118,7 @@ void SocialNetworkingApp::loadUsers() {
                 break; // if these conditions are met, we stop
             // skipping the name section
         }
-        while (token != "-1") { 
+        while (token != "-1" && ss) {
             User* f = findUser(token); // finds actual user object
             if (f)  // if found
                 users[i]->addFriend(f); // links them
