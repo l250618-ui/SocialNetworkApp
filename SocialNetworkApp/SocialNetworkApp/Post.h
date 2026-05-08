@@ -29,7 +29,6 @@ public:
     Date getDate() const;
     Entity* getSharedBy() const;
     bool likePost(Entity* user);
-    void addPost(Post* p);
     void addComment(Entity* author, string text);
     void displayLikedBy() const;
     void displayComments() const;
