@@ -11,121 +11,171 @@
 #include <sstream>
 using namespace std;
 
-SocialNetworkingApp::SocialNetworkingApp() {
-    users = new User * [MAX_USERS];
-    for (int i = 0; i < MAX_USERS; i++) users[i] = nullptr;
+SocialNetworkingApp::SocialNetworkingApp() { // default constructor which initializes whole system
+    users = new User * [MAX_USERS]; // creates dynamic array of user pointers
+    for (int i = 0; i < MAX_USERS; i++) 
+        users[i] = nullptr; // initializes all users to null
     userCount = 0;
-
-    pages = new Page * [MAX_PAGES];
-    for (int i = 0; i < MAX_PAGES; i++) pages[i] = nullptr;
+    pages = new Page * [MAX_PAGES]; // creates dynamic array of page pointers
+    for (int i = 0; i < MAX_PAGES; i++) 
+        pages[i] = nullptr; // initializes all users to null
     pageCount = 0;
-
-    currentUser = nullptr;
-    postManager = new PostManager();
+    
+    currentUser = nullptr; // no user logged in yet
+    postManager = new PostManager(); // creates postmanager
+    // handles all posts likes comments
 }
 
 SocialNetworkingApp::~SocialNetworkingApp() {
-    for (int i = 0; i < userCount; i++) delete users[i];
-    for (int i = 0; i < pageCount; i++) delete pages[i];
+    for (int i = 0; i < userCount; i++) 
+        delete users[i]; // deletes user objects
+    for (int i = 0; i < pageCount; i++) 
+        delete pages[i]; // deletes page objects
+    // deletes arrays
     delete[] users;
     delete[] pages;
-    delete postManager;
+    delete postManager; // deletes post manager
 }
 
 void SocialNetworkingApp::loadPages() {
     ifstream fin("Pages.txt");
-    string line;
-    getline(fin, line); 
-    while (getline(fin, line)) {
-        if (line.empty() || line == "\r") continue;
-        if (!line.empty() && line.back() == '\r') line.pop_back();
+    if (!fin.is_open()) { // if file isnt found, execution is stopped
+        cout << "Error: Pages.txt not found." << endl;
+        return;
+    }
+    string line; // temporary variable to store each line from file
+    getline(fin, line); // skip count on first line
+    while (getline(fin, line)) { // read line by line
+        if (line.empty() || line == "\r")
+            continue;
+        if (!line.empty() && line.back() == '\r')
+            line.pop_back();
         istringstream ss(line);
         string id, name;
         ss >> id;
-        getline(ss, name);
-        size_t start = name.find_first_not_of(" \t");
-        if (start != string::npos) name = name.substr(start);
-        pages[pageCount++] = new Page(id, name);
+        getline(ss, name); // after extracting id, read the rest
+        while (!name.empty() && name[0] == ' ') // remove leading spaces
+            name.erase(0, 1);
+        pages[pageCount++] = new Page(id, name); // new page object
     }
+
     fin.close();
 }
 
 void SocialNetworkingApp::loadUsers() {
     string line;
-
-    // PASS 1, create User objects
+    // PASS 1
+    // create User objects (ID + name only)
+    // Stops reading name when -1 OR another ID starts(u smthng or p smthng)
     ifstream fin("Users.txt");
-    getline(fin, line); // skip count
-    while (getline(fin, line)) {
-        if (line.empty() || line == "\r") continue;
-        if (!line.empty() && line.back() == '\r') line.pop_back();
+    if (!fin.is_open()) { // if file isnt found, execution is stopped
+        cout << "Error: Users.txt not found." << endl;
+        return;
+    }
+    getline(fin, line); // skip count on first line
+    while (getline(fin, line)) { // read line by line
+        if (line.empty() || line == "\r") // if line is empty or has unwanted hidden \r we skip
+            continue;
+        if (!line.empty() && line.back() == '\r') 
+            line.pop_back(); // if line isnt empty but end of line, theres an unwanted hidden r, we remove it as if affects comparisons and such stuff
         istringstream ss(line);
-        string id, token, name = "";
-        ss >> id;
-        while (ss >> token) {
-            if (token == "-1" || token[0] == 'u' || token[0] == 'p') break;
-            if (!name.empty()) name += " ";
-            name += token;
+        //istringstream is the input stream where ss is the object and line has the data that is turned into input stream
+        string id, token, name = ""; // token is temporary word holder
+        ss >> id; // we extract id
+        while (ss >> token) { // rest of the line is read word by word and each word gets stored into token
+            if (token == "-1" || ((token[0] == 'u' || token[0] == 'p') && token.size() > 1 && isdigit(token[1]))) 
+                // if token is -1, starts w user id or page id AND it has greater than one character AND that second character is a digit
+                break; // we stop
+            if (!name.empty()) 
+                name += " "; // if name is not empty, we create a full name w spaces
+            name += token; // otherwise we store it
         }
-        users[userCount++] = new User(id, name);
+        users[userCount++] = new User(id, name); // user object is created
     }
     fin.close();
 
-    // PASS 2, link friends and liked pages
+    // PASS 2
+    // link friends and liked pages to user
+    // Skip name again, Read friend IDs until - 1, Add each friend, Then read page IDs until - 1 and lastly Add liked pages
     ifstream fin2("Users.txt");
-    getline(fin2, line); 
-    int i = 0;
-    while (getline(fin2, line)) {
-        if (line.empty() || line == "\r") continue;
-        if (!line.empty() && line.back() == '\r') line.pop_back();
-        istringstream ss(line);
+    if (!fin2.is_open()) { // if file isnt found, execution is stopped
+        cout << "Error: Users.txt not found." << endl;
+        return;
+    }
+    getline(fin2, line); // count line so ignored
+    int i = 0; // this is the user index which is used to track which user we are processing
+    while (getline(fin2, line)) { // read line by line
+        if (line.empty() || line == "\r") // if line is empty or has unwanted r, we skip
+            continue;
+        if (!line.empty() && line.back() == '\r') // if line isnt empty and has unwanted r
+            line.pop_back(); // we remove the r
+        istringstream ss(line); //input stream with object ss and line which has data that is converted into stream
         string id, token;
-        ss >> id;
-        while (ss >> token) {
-            if (token == "-1" || token[0] == 'u' || token[0] == 'p') break;
+        // token holds words temporarily
+        ss >> id; // id is extracted
+        while (ss >> token) { // rest of the words are extracted
+            if (token == "-1" || ((token[0] == 'u' || token[0] == 'p') && token.size() > 1 && isdigit(token[1]))) 
+                break; // if these conditions are met, we stop
+            // skipping the name section
         }
-        while (token != "-1") {
-            User* f = findUser(token);
-            if (f) users[i]->addFriend(f);
+        while (token != "-1") { 
+            User* f = findUser(token); // finds actual user object
+            if (f)  // if found
+                users[i]->addFriend(f); // links them
             ss >> token;
         }
         while (ss >> token && token != "-1") {
-            Page* p = findPage(token);
-            if (p) users[i]->addLikedPage(p);
+            Page* p = findPage(token); // finds actual user page
+            if (p) 
+                users[i]->addLikedPage(p); // if found, links them
         }
-        i++;
+        i++; // we move onto next user
     }
     fin2.close();
 }
 
+// Gets all posts from PostManage. For each post: checks who shared it
+// if User → add post to user
+// if Page → add post to page
+// This connects posts to their owners
 void SocialNetworkingApp::linkPostEntities() {
-    Post** allPosts = postManager->getAllPosts();
-    int count = postManager->getPostCount();
-    for (int i = 0; i < count; i++) {
+    Post** allPosts = postManager->getAllPosts(); // array of pointers to all posts
+    int count = postManager->getPostCount(); // total number of posts
+    for (int i = 0; i < count; i++) { // we loop through all posts and get current post p
         Post* p = allPosts[i];
-        if (p == nullptr) continue;
-        Entity* sharedBy = p->getSharedBy();
-        if (sharedBy == nullptr) continue;
+        if (p == nullptr) 
+            continue;
+        Entity* sharedBy = p->getSharedBy(); // we get who shared the post
+        // it returns a generic pointer as it could be user or page
+        if (sharedBy == nullptr) 
+            continue;
+        // dynamic cast checks the REAL type of the object at runtime.
+        // It checks ke is this Entity actually a User or not
+        // If yes then returns valid pointer
+        // If no then returns nullptr
         User* u = dynamic_cast<User*>(sharedBy);
         if (u) {
-            u->addPost(p);
+            u->addPost(p); // we add post to user
         }
         else {
             Page* pg = dynamic_cast<Page*>(sharedBy);
-            if (pg) pg->addPost(p);
+            if (pg) 
+                pg->addPost(p); // we add post to page
         }
     }
 }
 
 User* SocialNetworkingApp::findUser(string id) const {
     for (int i = 0; i < userCount; i++)
-        if (users[i]->getID() == id) return users[i];
+        if (users[i]->getID() == id) 
+            return users[i];
     return nullptr;
 }
 
 Page* SocialNetworkingApp::findPage(string id) const {
     for (int i = 0; i < pageCount; i++)
-        if (pages[i]->getID() == id) return pages[i];
+        if (pages[i]->getID() == id) 
+            return pages[i];
     return nullptr;
 }
 
@@ -135,52 +185,55 @@ void SocialNetworkingApp::setDate(int d, int m, int y) {
 
 void SocialNetworkingApp::setCurrentUser() {
     string id;
-    cout << "Enter user ID: ";
-    cin >> id;
-    currentUser = findUser(id);
-    if (currentUser)
-        cout << currentUser->getName() << " successfully set as Current User" << endl;
-    else
-        cout << "User not found." << endl;
+    while (true) {
+        cout << "Enter user ID: ";
+        cin >> id;
+        currentUser = findUser(id);
+        if (currentUser) {
+            cout << currentUser->getName() << " successfully set as Current User" << endl;
+            break;
+        }
+        cout << "User not found. Please try again." << endl;
+    }
 }
 
 void SocialNetworkingApp::viewHome() const {
     cout << "-----------------------------------------------" << endl;
-    cout << currentUser->getName() << "                     - Home Page" << endl;
+    cout << "          " << currentUser->getName() << "- Home Page" << endl;
     cout << "-----------------------------------------------" << endl;
-
-    Post** allPosts = postManager->getAllPosts();
+    Post** allPosts = postManager->getAllPosts(); // gets all the posts in the system
     int count = postManager->getPostCount();
-
-    User** friends = currentUser->getFriends();
+    User** friends = currentUser->getFriends(); // list of friends
     int friendCount = currentUser->getFriendCount();
-
-    Page** likedPages = currentUser->getLikedPages();
+    Page** likedPages = currentUser->getLikedPages(); // pages user likes
     int likedPageCount = currentUser->getLikedPageCount();
-
-    for (int i = 0; i < count; i++) {
+    // loops thro all posts
+    for (int i = 0; i < count; i++) { // skips if null or not within 24 hrs
         Post* p = allPosts[i];
-        if (p == nullptr) continue;
-        if (!p->getDate().isWithin24Hours(currentDate)) continue;
-
+        if (p == nullptr) 
+            continue;
+        if (!p->getDate().isWithin24Hours(currentDate)) 
+            continue;
+        // finds who posted it which could be a user or a page
         Entity* sharedBy = p->getSharedBy();
-        if (sharedBy == nullptr) continue;
-
-        
+        if (sharedBy == nullptr) 
+            continue;
         for (int j = 0; j < friendCount; j++) {
-            if (friends[j] == sharedBy) {
-                p->display();
-                goto next; 
+            if (friends[j] == sharedBy) { // checks if post owner is in friend list
+                p->display(); // if it is, display the post
+                goto next; // this basically skips everything once post is found and moves to next  
             }
         }
-        
         for (int j = 0; j < likedPageCount; j++) {
             if (likedPages[j] == sharedBy) {
                 p->display();
                 goto next;
             }
         }
-    next:;
+    next:; // this is a label
+        // it does nothing
+        // goto next js jumps here
+        // kinda a bookmark
     }
 }
 
@@ -201,36 +254,32 @@ void SocialNetworkingApp::viewPage() const {
     cout << "Enter page ID: ";
     cin >> id;
     Page* p = findPage(id);
-    if (p) p->display();
+    if (p) 
+        p->display();
     else cout << "Page not found." << endl;
 }
 
 void SocialNetworkingApp::seeYourMemories() const {
     cout << "We hope you enjoy looking back and sharing your memories." << endl;
-
     Post** allPosts = postManager->getAllPosts();
     int count = postManager->getPostCount();
     bool found = false;
-
-    
     for (int i = 0; i < count; i++) {
         Post* p = allPosts[i];
-        if (p == nullptr) 
+        if (p == nullptr)
             continue;
-        if (p->getSharedBy() != currentUser) 
+        if (p->getSharedBy() != currentUser)
             continue;
-        if (!p->getDate().isSameDayAndMonth(currentDate)) 
+        if (!p->getDate().isSameDayAndMonth(currentDate))
             continue;
-        if (p->getDate().getYear() == currentDate.getYear()) 
-            continue; 
-
+        if (p->getDate().getYear() >= currentDate.getYear())
+            continue;
         int yearsAgo = currentDate.getYear() - p->getDate().getYear();
         cout << "On this Day" << endl;
         cout << yearsAgo << " Years Ago" << endl;
         p->display();
         found = true;
     }
-
     if (!found) cout << "No memories found for today." << endl;
 }
 
@@ -239,23 +288,19 @@ void SocialNetworkingApp::shareMemory() {
     string postID;
     cout << "Enter post ID to share as memory: ";
     cin >> postID;
-
     Post* original = postManager->getPost(postID);
     if (original == nullptr) {
         cout << "Post not found." << endl;
         return;
     }
-
-    string id, desc;
-    cout << "Enter memory ID: ";
-    cin >> id;
+    string id = "m" + to_string(postManager->getPostCount() + 1); // concatenates strings by making integer a string
+    string desc;
     cin.ignore();
     cout << "Enter description: ";
     getline(cin, desc);
-
     Memory* m = new Memory(id, desc, currentDate, currentUser, original);
     postManager->addPost(m);
-    currentUser->addPost(m); // FIX 6: was missing — memory must appear on user's timeline
+    currentUser->addPost(m);
     cout << "Memory shared!" << endl;
 }
 

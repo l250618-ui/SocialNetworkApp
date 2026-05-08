@@ -55,13 +55,16 @@ int User::getTimelineCount() const {
 }
 
 void User::displayFriends() const {
+	cout << getName() << " - Friend List" << endl;
 	for (int i = 0; i < friendCount; i++) {
-		cout << friends[i]->getName() << endl;
+		cout << friends[i]->getID() << " - " << friends[i]->getName() << endl;
 	}
 }
+
 void User::displayLikedPages() const {
+	cout << getName() << " - Liked Pages" << endl;
 	for (int i = 0; i < likedPageCount; i++) {
-		cout << likedPages[i]->getName() << endl;
+		cout << likedPages[i]->getID() << " - " << likedPages[i]->getName() << endl;
 	}
 }
 void User::displayTimeline() const {
@@ -70,9 +73,8 @@ void User::displayTimeline() const {
 	}
 }
 void User::display() const {
-	cout << "User: " << getName() << " (ID: " << getID() << ")" << endl;
-	displayFriends();
-	displayLikedPages();
+	cout << getName() << " - Time Line" << endl;
+	displayTimeline();
 }
 
 User::~User() {

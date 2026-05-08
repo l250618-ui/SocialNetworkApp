@@ -3,25 +3,24 @@
 #include <iostream>
 using namespace std;
 
-// default constructorsets everything to empty/zero
+// default constructor: sets everything to empty/zero
 ActivityPost::ActivityPost() {
     activityType = 0;
     activityValue = "";
 }
 
-
-ActivityPost::ActivityPost(string id, string desc, Date date, Entity* sharedBy, int type, string value)
-    : Post(id, desc, date, sharedBy) {
-    activityType = type;
-    activityValue = value;
+// calls parent class constructor to set id, date,  description and share by
+ActivityPost::ActivityPost(string id, string desc, Date date, Entity* sharedBy, int type, string value) : Post(id, desc, date, sharedBy) {
+    activityType = type; // number 1 to 4
+    activityValue = value; // stuff like "excited" or "kashmiri chai"
 }
 
-// returning the ctual the number (1, 2, 3, or 4)
+// returning the actual the number (1, 2, 3, or 4)
 int ActivityPost::getActivityType() const {
     return activityType;
 }
 
-// returns the value e.g. "Happy", "birthday", "Kashmiri Chai" aas phrasesss
+// returns the value e.g. "Happy", "birthday", "Kashmiri Chai" typa phrasesss
 string ActivityPost::getActivityValue() const {
     return activityValue;
 }
@@ -40,23 +39,23 @@ string ActivityPost::getActivityTypeString() const {
     else if (activityType == 4) {
         return "celebrating";   
     }
-    return "";
+    return ""; // returns empty string if type is somehow invalid
 }
 
 
-void ActivityPost::display() const {
+void ActivityPost::display() const { // overrides virtual display from post
     // print who posted and what activity
-    cout << "--- " << sharedBy->getName()
-         << " is " << getActivityTypeString()
-         << " " << activityValue << endl;
+    if (sharedBy == nullptr) 
+        return;
+    cout << "--- " << sharedBy->getName() << " is " << getActivityTypeString() << " " << activityValue << endl;
 
     // print the description text
     cout << "\"" << description << "\"" << " ... (" << sharedDate.toString() << ")" << endl;
 
     // print all comments
     displayComments();
-}
+} 
 
-// destructor - Post destructor handles memory cleanup
+// destructor: Post destructor handles memory cleanup
 ActivityPost::~ActivityPost() {
 }

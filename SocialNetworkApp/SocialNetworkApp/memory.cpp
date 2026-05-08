@@ -20,6 +20,10 @@ Memory::Memory(string id, string desc, Date date, Entity* sharedBy, Post* origin
     originalPost = original;
 }
 
+void Memory::setOriginalPost(Post* p) {
+    originalPost = p;
+}
+
 // simple getter for the original post
 // returning a pointer so caller can use it but not delete it
 Post* Memory::getOriginalPost() const {

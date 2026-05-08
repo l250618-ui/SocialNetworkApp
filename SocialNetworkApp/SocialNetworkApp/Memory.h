@@ -6,6 +6,7 @@ class Memory : public Post {
 public:
     Memory();
     Memory(string id, string desc, Date date,Entity* sharedBy, Post* original);
+    void setOriginalPost(Post* p);
     Post* getOriginalPost() const;
     void display() const override;
     ~Memory();
